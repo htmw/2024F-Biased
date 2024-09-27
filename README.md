@@ -1,0 +1,3 @@
+# Project Description
+
+SkinLens is a web based application that has highly trained deep-learning models that classifies images and text based symptoms to provide accurate diagnosis of skin conditions and recommend treatments. It is for patients who wants to quickly access their skin conditions and for dermatologists who wants to quickly access patient’s skin conditions. Upload a image, type in the symptoms and get result on the fly. Unlike the traditional visual inspections, SkinLens uses both image and symptoms analysis and offers more accurate results resulting in faster and personalized care, reduced cost. 
