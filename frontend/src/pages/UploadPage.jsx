@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Upload, FileImage } from "lucide-react";
+import axios from "axios";
 
 const UploadPage = () => {
   const [file, setFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
+  const [prediction, setPrediction] = useState(""); // To store the prediction result
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
@@ -22,6 +24,31 @@ const UploadPage = () => {
     event.preventDefault();
     setDragActive(false);
     setFile(event.dataTransfer.files[0]);
+  };
+
+  const handleSubmit = async () => {
+    if (!file) {
+      alert("Please upload an image first.");
+      return;
+    }
+
+    // Create FormData object and append the image file
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      // Send POST request to Flask backend
+      const response = await axios.post("http://localhost:5000/predict", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      // Set the prediction result to state
+      setPrediction(response.data.prediction);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
   };
 
   return (
@@ -70,10 +97,22 @@ const UploadPage = () => {
               </p>
             )}
           </div>
+
           {file && (
-            <button className="mt-6 w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+            <button
+              onClick={handleSubmit} // Analyze image on click
+              className="mt-6 w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
               Analyze Image
             </button>
+          )}
+
+          {/* Display the prediction result */}
+          {prediction && (
+            <div className="mt-6 p-4 bg-green-100 rounded-md">
+              <p className="text-lg text-green-700">Prediction Result:</p>
+              <p className="text-xl font-semibold">{prediction}</p>
+            </div>
           )}
         </div>
 
@@ -104,6 +143,7 @@ const UploadPage = () => {
   );
 };
 
+// Instruction item component
 const InstructionItem = ({ text }) => (
   <li className="flex items-start">
     <svg
