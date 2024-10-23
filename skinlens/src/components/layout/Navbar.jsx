@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
-const Navbar = ({ isChatOpen, setIsChatOpen, isMenuOpen, setIsMenuOpen }) => {
+const Navbar = () => {
   const location = useLocation();
 
   return (
@@ -21,13 +21,12 @@ const Navbar = ({ isChatOpen, setIsChatOpen, isMenuOpen, setIsMenuOpen }) => {
               currentPath={location.pathname}
             />
             <NavItem
-              text="Appointments"
-              to="/appointments"
+              text="Dermatologists"
+              to="/Dermatologists"
               currentPath={location.pathname}
             />
             <NavItem
               text="Chat"
-              onClick={() => setIsChatOpen(!isChatOpen)}
               currentPath={location.pathname}
             />
             <NavItem text="Info" to="/info" currentPath={location.pathname} />
@@ -39,7 +38,6 @@ const Navbar = ({ isChatOpen, setIsChatOpen, isMenuOpen, setIsMenuOpen }) => {
           </div>
           <div className="md:hidden flex items-center">
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-gray-800 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
               <Menu className="h-6 w-6" />
@@ -47,13 +45,6 @@ const Navbar = ({ isChatOpen, setIsChatOpen, isMenuOpen, setIsMenuOpen }) => {
           </div>
         </div>
       </div>
-      {isMenuOpen && (
-        <MobileMenu
-          setIsChatOpen={setIsChatOpen}
-          isChatOpen={isChatOpen}
-          setIsMenuOpen={setIsMenuOpen}
-        />
-      )}
     </nav>
   );
 };
@@ -72,61 +63,7 @@ const NavItem = ({ text, to, onClick, currentPath }) => (
   </Link>
 );
 
-const MobileMenu = ({ setIsChatOpen, isChatOpen, setIsMenuOpen }) => (
-  <div className="md:hidden">
-    <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-      <MobileMenuItem
-        text="Upload"
-        to="/upload"
-        setIsMenuOpen={setIsMenuOpen}
-      />
-      <MobileMenuItem
-        text="Appointments"
-        to="/appointments"
-        setIsMenuOpen={setIsMenuOpen}
-      />
-      <MobileMenuItem
-        text="Chat"
-        onClick={() => {
-          setIsChatOpen(!isChatOpen);
-          setIsMenuOpen(false);
-        }}
-      />
-      <MobileMenuItem text="Info" to="/info" setIsMenuOpen={setIsMenuOpen} />
-    </div>
-    <div className="pt-4 pb-3 border-t border-gray-200">
-      <div className="px-2">
-        <button
-          onClick={() => setIsMenuOpen(false)}
-          className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-700"
-        >
-          Sign Up
-        </button>
-      </div>
-    </div>
-    <button
-      onClick={() => setIsMenuOpen(false)}
-      className="absolute top-0 right-0 m-2 text-gray-500 hover:text-gray-600"
-    >
-      <X className="h-6 w-6" />
-    </button>
-  </div>
-);
 
-const MobileMenuItem = ({ text, to, onClick, setIsMenuOpen }) => (
-  <Link
-    to={to}
-    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-    onClick={() => {
-      if (onClick) {
-        onClick();
-      } else {
-        setIsMenuOpen(false);
-      }
-    }}
-  >
-    {text}
-  </Link>
-);
+
 
 export default Navbar;
