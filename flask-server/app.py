@@ -38,11 +38,11 @@ def predict():
 
     # Mapping of prediction index to disease names
     index = [
-        'Actinic Keratosis - Caused by intense UV rays.',
-        'Dermatofibroma - Harmless skin trauma.',
-        'Melanoma - Serious skin cancer.',
-        'Seborrheic Keratosis - Harmless skin growth.',
-        'Squamous Cell Carcinoma - Treatable UV radiation skin infection.',
+        'Actinic Keratosis',
+        'Dermatofibroma',
+        'Melanoma',
+        'Seborrheic Keratosis',
+        'Squamous Cell Carcinoma',
         "Acne and Rosacea",
         "Eczema",
         "Tinea (Ringworm)"

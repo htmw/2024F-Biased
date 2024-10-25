@@ -5,49 +5,83 @@ import axios from "axios";
 const UploadPage = () => {
   const [file, setFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
+  const [preview, setPreview] = useState(null); // To store the image preview URL
   const [prediction, setPrediction] = useState(""); // To store the prediction result
+  const [errorMessage, setErrorMessage] = useState(""); // To store the error message
 
+  // Handle file change (selecting file from the file picker)
   const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
+    const selectedFile = event.target.files[0];
+
+    if (selectedFile) {
+      const fileType = selectedFile.type;
+      if (fileType === "image/jpeg" || fileType === "image/png") {
+        setFile(selectedFile);
+        setErrorMessage(""); // Clear any previous error message
+
+        // Create a preview URL for the selected image
+        const objectUrl = URL.createObjectURL(selectedFile);
+        setPreview(objectUrl);
+      } else {
+        // Show error if the file format is not supported
+        setErrorMessage("Unsupported file format. Please upload a JPEG or PNG image.");
+        setFile(null);
+        setPreview(null);
+      }
+    }
   };
 
-  const handleDragOver = (event) => {
-    event.preventDefault();
-    setDragActive(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragActive(false);
-  };
-
+  // Handle file drag and drop
   const handleDrop = (event) => {
     event.preventDefault();
     setDragActive(false);
-    setFile(event.dataTransfer.files[0]);
+    const droppedFile = event.dataTransfer.files[0];
+
+    if (droppedFile) {
+      const fileType = droppedFile.type;
+      if (fileType === "image/jpeg" || fileType === "image/png") {
+        setFile(droppedFile);
+        setErrorMessage(""); // Clear any previous error message
+
+        // Create a preview URL for the dropped image
+        const objectUrl = URL.createObjectURL(droppedFile);
+        setPreview(objectUrl);
+      } else {
+        setErrorMessage("Unsupported file format. Please upload a JPEG or PNG image.");
+        setFile(null);
+        setPreview(null);
+      }
+    }
   };
 
+  // Handle form submission (sending the image to the backend)
   const handleSubmit = async () => {
     if (!file) {
       alert("Please upload an image first.");
       return;
     }
 
-    // Create FormData object and append the image file
     const formData = new FormData();
     formData.append("image", file);
 
     try {
-      // Send POST request to Flask backend
+      // Make the POST request to Flask backend
       const response = await axios.post("http://localhost:5000/predict", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      // Set the prediction result to state
-      setPrediction(response.data.prediction);
+      // Ensure the backend returns a valid prediction
+      if (response && response.data && response.data.prediction) {
+        setPrediction(response.data.prediction);
+        setErrorMessage(""); // Clear any error message if the prediction is successful
+      } else {
+        setErrorMessage("Unable to fetch prediction. Please try again.");
+      }
     } catch (error) {
       console.error("Error uploading file:", error);
+      setErrorMessage("Error occurred during prediction. Please try again.");
     }
   };
 
@@ -63,13 +97,17 @@ const UploadPage = () => {
             className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
               dragActive ? "border-gray-400 bg-gray-50" : "border-gray-300"
             }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
+            onDragOver={(e) => e.preventDefault()}
+            onDragLeave={() => setDragActive(false)}
             onDrop={handleDrop}
           >
             <div className="mb-6">
-              {file ? (
-                <FileImage className="mx-auto h-16 w-16 text-gray-600" />
+              {preview ? (
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="mx-auto h-32 w-32 object-cover rounded-md"
+                />
               ) : (
                 <Upload className="mx-auto h-16 w-16 text-gray-400" />
               )}
@@ -96,11 +134,18 @@ const UploadPage = () => {
                 {file.name}
               </p>
             )}
+
+            {/* Show error message */}
+            {errorMessage && (
+              <div className="mt-4 text-red-500 text-sm">
+                {errorMessage}
+              </div>
+            )}
           </div>
 
           {file && (
             <button
-              onClick={handleSubmit} // Analyze image on click
+              onClick={handleSubmit}
               className="mt-6 w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             >
               Analyze Image
@@ -116,7 +161,7 @@ const UploadPage = () => {
           )}
         </div>
 
-        {/* Right side: Information */}
+        {/* Right side: Upload Instructions */}
         <div className="w-full lg:w-1/2">
           <div className="bg-gray-50 rounded-xl p-8 shadow-sm">
             <h2 className="text-2xl font-light text-gray-900 mb-6">
@@ -126,7 +171,7 @@ const UploadPage = () => {
               <InstructionItem text="Ensure the image is clear and well-lit" />
               <InstructionItem text="Focus on the specific skin area you want analyzed" />
               <InstructionItem text="Remove any accessories or clothing that might obstruct the view" />
-              <InstructionItem text="Accepted file formats: JPEG, PNG, GIF" />
+              <InstructionItem text="Accepted file formats: JPEG, PNG" />
               <InstructionItem text="Maximum file size: 10MB" />
             </ul>
             <div className="mt-8 p-4 bg-white rounded-lg border border-gray-200">
