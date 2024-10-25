@@ -1,0 +1,90 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+
+# Environment variables
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Virtual environment
+flask-server/venv/
+flask-server/.venv/
+
+# Packages
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+wheels/
+
+# Flask cache
+instance/
+*.sqlite
+*.db
+
+# Logs and temp files
+*.log
+*.out
+*.err
+logs/
+*.pid
+*.gz
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Test Coverage reports
+htmlcov/
+.tox/
+.nox/
+.cache/
+coverage/
+cover/
+*.cover
+.cache/
+nosetests.xml
+coverage.xml
+*.coveragerc
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.pytest_cache/
+junitxml.xml
+test-results.xml
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Ignore uploaded images
+uploads/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Streamlit
+.streamlit/
+
+# Ignore environment configuration files
+config.yaml
+*.json
+
