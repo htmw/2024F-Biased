@@ -4,8 +4,6 @@ import Navbar from "./components/layout/Navbar";
 import HomePage from "./pages/HomePage";
 import UploadPage from "./pages/UploadPage";
 import backgroundImage from "./bg.png";
-import Signup from "./pages/Signup";
-import Login from "./pages/Login";
 
 const App = () => {
   
@@ -29,8 +27,6 @@ const App = () => {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/upload" element={<UploadPage />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/login" element={<Login />} />
           </Routes>
 
         </div>
