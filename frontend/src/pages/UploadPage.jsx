@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { auth, db } from "../firebase-config";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { doc, setDoc,getDoc, collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
+import ViewReport from "../components/report/viewReport";
 
 const UploadPage = () => {
   const [file, setFile] = useState(null);
@@ -19,17 +20,35 @@ const UploadPage = () => {
   const [showInstructions, setShowInstructions] = useState(true);
   const [hideUploadSection, setHideUploadSection] = useState(false);
   const [hideTitle, setHideTitle] = useState(false);
+  const [caseId, setCaseId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
 
   // Set user information on mount
   useEffect(() => {
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      setUser({
-        uid: currentUser.uid,
-        email: currentUser.email,
-      });
-    }
+    const fetchUserData = async () => {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userRef = doc(db, "users", currentUser.uid);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUser({
+            uid: currentUser.uid,
+            email: currentUser.email,
+            name: userData.name || "Unknown Patient",
+          });
+        } else {
+          setUser({
+            uid: currentUser.uid,
+            email: currentUser.email,
+          });
+        }
+      }
+    };
+    fetchUserData();
   }, []);
+  
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
@@ -64,36 +83,40 @@ const UploadPage = () => {
     }
   };
 
+  
   const handleSubmit = async () => {
     if (!file) {
       setErrorMessage("Please upload an image.");
       setTimeout(() => setErrorMessage(""), 2000);
       return;
     }
-
+  
     const storage = getStorage();
-    const caseId = uuidv4();
+    const newCaseId = uuidv4();
     const storagePath = user
-      ? `cases/${user.uid}/${caseId}/${file.name}`
-      : `temp/${caseId}/${file.name}`;
+      ? `cases/${user.uid}/${newCaseId}/${file.name}`
+      : `temp/${newCaseId}/${file.name}`;
     const storageRef = ref(storage, storagePath);
-
+  
     try {
       // Upload file
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
-
-      // Add document to Firestore for logged-in users
+  
+      // Add document to Firestore for logged-in users using `setDoc()` with `newCaseId` as the document ID
       if (user) {
-        await addDoc(collection(db, "cases"), {
-          caseId,
+        const caseDocRef = doc(collection(db, "cases"), newCaseId);
+        await setDoc(caseDocRef, {
+          caseId: newCaseId,
           patientId: user.uid,
           patientEmail: user.email,
+          patientName: user.name,
           imageUrl: downloadURL,
           timestamp: new Date().toISOString(),
         });
       }
-
+  
+      setCaseId(newCaseId);
       setImageUrl(downloadURL);
       setUploadMessage(
         user
@@ -109,42 +132,56 @@ const UploadPage = () => {
       setTimeout(() => setErrorMessage(""), 2000);
     }
   };
+  
 
   const handlePredict = async () => {
     if (!imageUrl) {
       alert("No image URL available for prediction.");
       return;
     }
-
+  
     try {
+      // Make the prediction request to the backend
       const response = await axios.post("http://localhost:5000/predict", { imageUrl });
       if (response.data && response.data.prediction) {
-        setPrediction(response.data.prediction);
-
-        // Fetch description and treatment from Firestore for logged-in users
-        if (user) {
-          const diseasesRef = collection(db, "diseases");
-          const q = query(diseasesRef, where("disease", "==", response.data.prediction));
-          const querySnapshot = await getDocs(q);
-
-          if (!querySnapshot.empty) {
-            // Assuming there's only one match
-            const diseaseDoc = querySnapshot.docs[0].data();
-            setDescription(diseaseDoc.description || "No description available.");
-            setTreatment(diseaseDoc.treatment || "No treatment recommendations available.");
-          } else {
-            setDescription("No description found.");
-            setTreatment("No treatment recommendations found.");
-          }
+        const predictedDisease = response.data.prediction;
+        setPrediction(predictedDisease);
+  
+        // Fetch description and treatment for the predicted disease
+        let fetchedDescription = "No description available.";
+        let fetchedTreatment = "No treatment recommendations available.";
+  
+        const diseasesRef = collection(db, "diseases");
+        const q = query(diseasesRef, where("disease", "==", predictedDisease));
+        const querySnapshot = await getDocs(q);
+  
+        if (!querySnapshot.empty) {
+          const diseaseDoc = querySnapshot.docs[0].data();
+          fetchedDescription = diseaseDoc.description || fetchedDescription;
+          fetchedTreatment = diseaseDoc.treatment || fetchedTreatment;
+        }
+  
+        setDescription(fetchedDescription);
+        setTreatment(fetchedTreatment);
+  
+        // Update the Firestore document for the current case with prediction results
+        if (caseId) {
+          const caseDocRef = doc(collection(db, "cases"), caseId);
+          await setDoc(caseDocRef, {
+            prediction: predictedDisease,
+            description: fetchedDescription,
+            treatment: fetchedTreatment,
+          }, { merge: true }); // Merge to avoid overwriting other fields
         }
       } else {
         alert("Failed to get prediction. Please try again.");
       }
-
+  
       setHideUploadSection(true);
       setPreview(null);
       setHideTitle(true);
-
+  
+      // For non-authenticated users, delete the temporary image after use
       if (!user) {
         setTimeout(async () => {
           try {
@@ -162,7 +199,7 @@ const UploadPage = () => {
       alert("Error occurred during prediction. Please try again.");
     }
   };
-
+  
   return (
     <div className="max-w-6xl mx-auto px-4 py-16">
       {/* Display Success and Error Messages */}
@@ -178,6 +215,11 @@ const UploadPage = () => {
           </div>
         )}
       </div>
+
+      {/* Modal */}
+      {showModal && caseId && (
+        <ViewReport caseId={caseId} onClose={() => setShowModal(false)} />
+      )}
 
       {!hideTitle && (
         <h1 className="text-3xl font-light text-gray-900 mb-8 text-center">
@@ -283,7 +325,7 @@ const UploadPage = () => {
               <div className="flex justify-center space-x-4 mt-6">
                 <button
                   className="bg-gray-800 text-white px-8 py-3 rounded-lg hover:bg-gray-700 transition-all shadow-lg"
-                  onClick={() => alert("View Report functionality coming soon!")}
+                  onClick={() => setShowModal(true)}
                 >
                   View Report
                 </button>
