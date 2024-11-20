@@ -6,6 +6,7 @@ import UploadPage from "./pages/UploadPage";
 import backgroundImage from "./bg.png";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
+import ViewReport from "./components/report/viewReport";
 
 const App = () => {
   
@@ -31,6 +32,7 @@ const App = () => {
             <Route path="/upload" element={<UploadPage />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/report/:caseId" element={<ViewReport />} />
           </Routes>
 
         </div>
