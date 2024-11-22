@@ -196,7 +196,6 @@ const UploadPage = () => {
       }
     } catch (error) {
       console.error("Error fetching prediction:", error);
-      alert("Error occurred during prediction. Please try again.");
     }
   };
   

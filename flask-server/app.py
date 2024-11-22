@@ -29,7 +29,7 @@ def predict():
         # Fetch the image from the URL
         response = requests.get(image_url)
         if response.status_code != 200:
-            return jsonify({'error': 'Failed to fetch image from URL'}), 400
+            return jsonify({'error': 'Failed to fetch image from URL HTTP {response.status_code}'}), 400
 
         # Load the image into memory
         img = Image.open(BytesIO(response.content))
@@ -50,7 +50,7 @@ def predict():
 
         # Mapping of prediction index to disease names
         index = [
-            'Actinic Keratosis',
+            "Actinic Keratoses and Bowen's Disease",
             'Dermatofibroma',
             'Melanoma',
             'Seborrheic Keratosis',
