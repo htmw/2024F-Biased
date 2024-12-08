@@ -23,9 +23,9 @@ const UploadPage = () => {
   const [caseId, setCaseId] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-
   // Set user information on mount
   useEffect(() => {
+    
     const fetchUserData = async () => {
       const currentUser = auth.currentUser;
       if (currentUser) {
@@ -113,6 +113,7 @@ const UploadPage = () => {
           patientName: user.name,
           imageUrl: downloadURL,
           timestamp: new Date().toISOString(),
+          status:"Open",
         });
       }
   
@@ -171,6 +172,7 @@ const UploadPage = () => {
             prediction: predictedDisease,
             description: fetchedDescription,
             treatment: fetchedTreatment,
+            status:"Pending Review"
           }, { merge: true }); // Merge to avoid overwriting other fields
         }
       } else {
@@ -328,12 +330,12 @@ const UploadPage = () => {
                 >
                   View Report
                 </button>
-                <button
+                {/* <button
                   className="bg-gray-800 text-white px-8 py-3 rounded-lg hover:bg-gray-700 transition-all shadow-lg"
                   onClick={() => alert("Download Report functionality coming soon!")}
                 >
                   Download Report
-                </button>
+                </button> */}
               </div>
             </div>
           )}

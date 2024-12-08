@@ -62,7 +62,9 @@ const Navbar = () => {
 
           {/* Navigation Links */}
           <div className="hidden md:flex md:space-x-8">
-            <NavItem text="Upload" to="/upload" currentPath={location.pathname} />
+            {user?.role !== "dermatologist" && (
+                <NavItem text="Upload" to="/upload" currentPath={location.pathname} />
+              )}
             <NavItem text="Dermatologists" to="/dermatologists" currentPath={location.pathname} />
             {user && <NavItem text="Chat" to="/chat" currentPath={location.pathname} />} {/* Chat only visible when logged in */}
             <NavItem text="Info" to="/info" currentPath={location.pathname} />
