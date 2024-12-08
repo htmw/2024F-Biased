@@ -14,6 +14,7 @@ import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import ViewReport from "./components/report/viewReport";
 import DermDashboardPage from "./pages/DermDashboardpage";
+import PatientRecordsPage from "./pages/PatientRecordsPage";
 import { auth, db } from "./firebase-config";
 import { doc, getDoc } from "firebase/firestore";
 
@@ -106,6 +107,7 @@ const App = () => {
         <div className="min-h-screen bg-white bg-opacity-30">
           <Navbar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
           <Routes>
+            <Route path="/records" element={<PatientRecordsPage />} /> 
             <Route
               path="/"
               element={
