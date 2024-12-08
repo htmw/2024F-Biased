@@ -1,43 +1,41 @@
 import React, { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { query, where, collection, doc, getDocs } from "firebase/firestore";
 import { db, auth } from "../../firebase-config";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useParams } from "react-router-dom";
 
-const ViewReport = () => {
+const ViewReport = ({ caseId, onClose }) => {
   const [reportData, setReportData] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [imagesLoaded, setImagesLoaded] = useState(false);
-  const { caseId } = useParams();
 
   useEffect(() => {
+    if (!caseId) {
+      // console.error("No Case ID found in params!");
+      setErrorMessage("Invalid case ID. Please try again.");
+      return;
+    }
+
     const fetchReportByCaseId = async () => {
       try {
-        const user = auth.currentUser;
-        if (!user) {
-          setErrorMessage("Please log in to view reports.");
-          return;
-        }
+        const q = query(collection(db, "cases"), where("caseId", "==", caseId));
+        const querySnapshot = await getDocs(q);
 
-        const caseDocRef = doc(db, "cases", caseId);
-        const caseDoc = await getDoc(caseDocRef);
-
-        if (caseDoc.exists()) {
-          setReportData(caseDoc.data());
-          setErrorMessage("");
+        if (!querySnapshot.empty) {
+          querySnapshot.forEach((doc) => {
+            setReportData(doc.data());
+          });
         } else {
           setErrorMessage("Report not found.");
         }
       } catch (error) {
-        console.error("Error fetching report:", error);
+        console.log(error)
         setErrorMessage("Failed to fetch report. Please try again later.");
       }
     };
 
-    if (caseId) {
-      fetchReportByCaseId();
-    }
+    fetchReportByCaseId();
   }, [caseId]);
 
   const handleImageLoad = () => {
@@ -105,7 +103,7 @@ const ViewReport = () => {
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50 p-4">
       <div className="bg-[#FFE4C4] shadow-lg rounded-md w-full max-w-xl p-6 relative max-h-[90vh] overflow-y-auto">
         <button
-          onClick={() => window.history.back()}
+          onClick={onClose}
           className="absolute top-4 right-4 bg-gray-200 text-gray-800 rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-300 transition-colors"
         >
           ×
@@ -198,7 +196,12 @@ const ViewReport = () => {
                   Reviewed on:{" "}
                   {new Date(reportData.dermReviewedAt).toLocaleString()}
 
-        </div>
+                </div>
+                <div className="text-xs text-gray-500 mt-2">
+                  Reviewed By:{" "}
+                  {reportData.reviewedBy}
+
+                </div>
               </div>
           </div>
           )}
@@ -223,12 +226,12 @@ const ViewReport = () => {
           >
             Print Report
           </button>
-          <button
+          {/* <button
             onClick={downloadReport}
             className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700 transition-colors"
           >
             Download PDF
-          </button>
+          </button> */}
         </div>
       </div>
     </div>

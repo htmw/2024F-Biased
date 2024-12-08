@@ -4,6 +4,7 @@ import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../../firebase-config";
 import { Search, ChevronUp, ChevronDown } from "lucide-react";
 import DermActionModal from "./DermActionModal";
+import ViewReport from "../report/viewReport";
 
 const DermDashboard = () => {
   const [cases, setCases] = useState([]);
@@ -17,7 +18,14 @@ const DermDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showActionModal, setShowActionModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [selectedCase, setSelectedCase] = useState(null);
+  const [selectedCaseId, setSelectedCaseId] = useState(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
   const navigate = useNavigate();
 
   const fetchCases = async () => {
@@ -49,7 +57,6 @@ const DermDashboard = () => {
           return;
         }
 
-        // Verify dermatologist role
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (!userDoc.exists() || userDoc.data().role !== "dermatologist") {
           navigate("/");
@@ -117,7 +124,8 @@ const DermDashboard = () => {
   }, [searchTerm, filterAttribute, cases, sortConfig]);
 
   const handleViewReport = (caseId) => {
-    navigate(`/report/${caseId}`);
+    setSelectedCaseId(caseId);
+    setShowReportModal(true);
   };
 
   const handleTakeAction = (caseItem) => {
@@ -127,6 +135,17 @@ const DermDashboard = () => {
 
   const handleReviewSuccess = () => {
     fetchCases();
+  };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredCases.length / itemsPerPage);
+  const currentData = filteredCases.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const changePage = (newPage) => {
+    setCurrentPage(newPage);
   };
 
   const TableHeader = ({ label, sortKey }) => {
@@ -214,8 +233,8 @@ const DermDashboard = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCases.length > 0 ? (
-                  filteredCases.map((caseItem) => (
+                {currentData.length > 0 ? (
+                  currentData.map((caseItem) => (
                     <tr
                       key={caseItem.id}
                       className="hover:bg-gray-50 transition-colors"
@@ -259,7 +278,7 @@ const DermDashboard = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => handleViewReport(caseItem.id)}
+                            onClick={() => handleViewReport(caseItem.caseId)}
                             className="text-gray-800 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-md transition-colors"
                           >
                             View Report
@@ -294,9 +313,36 @@ const DermDashboard = () => {
             </table>
           </div>
         </div>
+        {/* Pagination Controls */}
+        <div className="flex justify-between items-center mt-4">
+          <button
+            onClick={() => changePage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-600">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => changePage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       </div>
 
-      {showActionModal && (
+      {showReportModal && selectedCaseId && (
+        <ViewReport
+          caseId={selectedCaseId}
+          onClose={() => setShowReportModal(false)}
+        />
+      )}
+
+      {showActionModal && selectedCase && (
         <DermActionModal
           caseId={selectedCase.id}
           currentCase={selectedCase}

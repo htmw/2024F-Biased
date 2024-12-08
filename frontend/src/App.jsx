@@ -116,24 +116,10 @@ const App = () => {
                 )
               }
             />
-            <Route
-              path="/upload"
-              element={
-                <ProtectedRoute>
-                  <UploadPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/upload" element={<UploadPage />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
-            <Route
-              path="/report/:caseId"
-              element={
-                <ProtectedRoute>
-                  <ViewReport />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/report/:caseId" element={<ViewReport />} />
             <Route
               path="/dashboard"
               element={

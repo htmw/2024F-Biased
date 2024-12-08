@@ -1,59 +1,43 @@
 import React, { useState, useEffect } from "react";
-import { doc, updateDoc, collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase-config";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { db,auth } from "../../firebase-config";
 
 const DermActionModal = ({ caseId, currentCase, onClose, onSuccess }) => {
   const [diagnosis, setDiagnosis] = useState(currentCase?.dermDiagnosis || "");
-  const [recommendations, setRecommendations] = useState(
-    currentCase?.dermRecommendations || "",
-  );
-  const [selectedDisease, setSelectedDisease] = useState(
-    currentCase?.prediction || "",
-  );
-  const [diseases, setDiseases] = useState([]);
-  const [description, setDescription] = useState(
-    currentCase?.description || "",
-  );
-  const [treatment, setTreatment] = useState(currentCase?.treatment || "");
-  const [loading, setLoading] = useState(false);
+  const [prediction, setPrediction] = useState(currentCase?.prediction || "Loading...");
+  const [description, setDescription] = useState(currentCase?.description || "Loading...");
+  const [treatment, setTreatment] = useState(currentCase?.treatment || "Loading...");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  
   useEffect(() => {
-    const fetchDiseases = async () => {
-      try {
-        const diseasesRef = collection(db, "diseases");
-        const snapshot = await getDocs(diseasesRef);
-        const diseasesData = snapshot.docs.map((doc) => doc.data());
-        setDiseases(diseasesData);
+    const fetchCaseData = async () => {
+      if (!caseId) {
+        setError("Invalid case ID. Cannot load case details.");
+        return;
+      }
 
-        if (selectedDisease) {
-          const selectedDiseaseData = diseasesData.find(
-            (d) => d.disease === selectedDisease,
-          );
-          if (selectedDiseaseData) {
-            setDescription(selectedDiseaseData.description);
-            setTreatment(selectedDiseaseData.treatment);
-          }
+      try {
+        const caseRef = doc(db, "cases", caseId);
+        const caseSnap = await getDoc(caseRef);
+
+        if (caseSnap.exists()) {
+          const caseData = caseSnap.data();
+          setPrediction(caseData.prediction || "Unknown Disease");
+          setDescription(caseData.description || "No description available.");
+          setTreatment(caseData.treatment || "No treatment recommendations available.");
+        } else {
+          setError("Case not found.");
         }
-      } catch (error) {
-        console.error("Error fetching diseases:", error);
-        setError("Failed to load diseases list");
+      } catch (err) {
+        console.error("Error fetching case data:", err);
+        setError("Failed to load case details. Please try again.");
       }
     };
 
-    fetchDiseases();
-  }, [selectedDisease]);
-
-  const handleDiseaseChange = (e) => {
-    const newDisease = e.target.value;
-    setSelectedDisease(newDisease);
-
-    const diseaseData = diseases.find((d) => d.disease === newDisease);
-    if (diseaseData) {
-      setDescription(diseaseData.description);
-      setTreatment(diseaseData.treatment);
-    }
-  };
+    fetchCaseData();
+  }, [caseId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,21 +45,29 @@ const DermActionModal = ({ caseId, currentCase, onClose, onSuccess }) => {
     setError("");
 
     try {
+      const user = auth.currentUser; // Get the current authenticated user
+      if (!user) {
+        setError("User not authenticated.");
+        setLoading(false);
+        return;
+      }
+
+      // Fetch dermatologist name from Firestore
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const dermatologistName = userDoc.exists() ? userDoc.data().name || "Unknown" : "Unknown";
+
       const caseRef = doc(db, "cases", caseId);
       await updateDoc(caseRef, {
         dermDiagnosis: diagnosis,
-        dermRecommendations: recommendations,
         dermReviewedAt: new Date().toISOString(),
         status: "reviewed",
-        prediction: selectedDisease,
-        description: description,
-        treatment: treatment,
+        reviewedBy: dermatologistName,
       });
 
       onSuccess();
       onClose();
-    } catch (error) {
-      console.error("Error updating case:", error);
+    } catch (err) {
+      console.error("Error updating case:", err);
       setError("Failed to update case. Please try again.");
     } finally {
       setLoading(false);
@@ -84,80 +76,85 @@ const DermActionModal = ({ caseId, currentCase, onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-lg">
         <div className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <h1
+            className="text-2xl font-bold text-white-900 mb-4 p-3 rounded-md"
+            style={{ backgroundColor: "#FFE4C4" }}
+          >
             Dermatologist Review
-          </h2>
+          </h1>
+          <hr className="mb-4" />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Case Details</h2>
+
+          <form onSubmit={handleSubmit}>
+            {/* AI Diagnosis Section */}
+            <div className="mb-6">
               <label
-                htmlFor="disease"
-                className="block text-sm font-medium text-gray-700"
+                htmlFor="prediction"
+                className="block text-lg font-semibold text-gray-800 mb-2"
               >
-                Disease Name
+                AI Diagnosis
               </label>
-              <select
-                id="disease"
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
-                value={selectedDisease}
-                onChange={handleDiseaseChange}
-                required
+              <p
+                id="prediction"
+                className="text-gray-700 bg-gray-100 p-3 rounded-md"
               >
-                <option value="">Select Disease</option>
-                {diseases.map((disease, index) => (
-                  <option key={index} value={disease.disease}>
-                    {disease.disease}
-                  </option>
-                ))}
-              </select>
+                {prediction}
+              </p>
             </div>
 
-            {/*<div>
+            {/* Description Section */}
+            <div className="mb-6">
               <label
                 htmlFor="description"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-lg font-semibold text-gray-800 mb-2"
               >
-                Disease Description
+                Description
               </label>
-              <textarea
+              <p
                 id="description"
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-              />
-                </div>*/}
+                className="text-gray-700 bg-gray-100 p-3 rounded-md"
+              >
+                {description}
+              </p>
+            </div>
 
-            {/*<div>
+            {/* Treatment Recommendations Section */}
+            <div className="mb-6">
               <label
                 htmlFor="treatment"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-lg font-semibold text-gray-800 mb-2"
               >
-                General Treatment Guidelines
+                Treatment Recommendations
               </label>
-              <textarea
+              <p
                 id="treatment"
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
-                rows={3}
-                value={treatment}
-                onChange={(e) => setTreatment(e.target.value)}
-                required
-              />
-              </div>*/}
+                className="text-gray-700 bg-gray-100 p-3 rounded-md"
+              >
+                {treatment}
+              </p>
+            </div>
 
-            <div>
+            <hr className="mb-4" />
+
+            {/* Comment Section */}
+            <div className="mb-6">
               <label
                 htmlFor="diagnosis"
-                className="block text-sm font-medium text-gray-700"
+                className="text-lg font-semibold text-gray-800 mb-4 p-3 rounded-md flex items-center"
+                style={{
+                  backgroundColor: "#FFFAF0",
+                  border: "2px solid #FFD700",
+                }}
               >
-                Comment
+                Add Comment
               </label>
               <textarea
                 id="diagnosis"
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
+                name="diagnosis"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 sm:text-sm bg-gray-50 p-3"
                 rows={3}
                 value={diagnosis}
                 onChange={(e) => setDiagnosis(e.target.value)}
@@ -166,27 +163,11 @@ const DermActionModal = ({ caseId, currentCase, onClose, onSuccess }) => {
               />
             </div>
 
-            {/*<div>
-              <label
-                htmlFor="recommendations"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Treatment Recommendations
-              </label>
-              <textarea
-                id="recommendations"
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
-                rows={4}
-                value={recommendations}
-                onChange={(e) => setRecommendations(e.target.value)}
-                placeholder="Enter your treatment recommendations"
-                required
-              />
-            </div>*/}
+            {/* Error Message */}
+            {error && <div className="text-red-600 text-sm mb-4">{error}</div>}
 
-            {error && <div className="text-red-600 text-sm">{error}</div>}
-
-            <div className="flex justify-end space-x-3 mt-6">
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3">
               <button
                 type="button"
                 onClick={onClose}
