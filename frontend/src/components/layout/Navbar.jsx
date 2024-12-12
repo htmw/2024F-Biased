@@ -10,6 +10,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [logoutMessage, setLogoutMessage] = useState("");
+  const [warningMessage, setWarningMessage] = useState(""); // State for warnings if not logged in
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -49,10 +50,21 @@ const Navbar = () => {
     }
   };
 
+  const handleProtectedRoute = (route, allowedRoles) => {
+    if (!user || !allowedRoles.includes(user.role)) {
+      setWarningMessage("Log in to access this feature.");
+      setTimeout(() => setWarningMessage(""), 3000); // Clear warning after 3 seconds
+    } else {
+      navigate(route);
+    }
+  };
+
   return (
     <nav className="bg-white border-b border-gray-200">
+
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
+
           {/* Logo Section */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="text-2xl font-light text-gray-800">
@@ -62,11 +74,35 @@ const Navbar = () => {
 
           {/* Navigation Links */}
           <div className="hidden md:flex md:space-x-8">
-            {user?.role !== "dermatologist" && (
-                <NavItem text="Upload" to="/upload" currentPath={location.pathname} />
-              )}
-            <NavItem text="Dermatologists" to="/dermatologists" currentPath={location.pathname} />
-            {user && <NavItem text="Chat" to="/chat" currentPath={location.pathname} />} {/* Chat only visible when logged in */}
+            {/* Upload: Guests and Patients can see it */}
+            {(user?.role === "patient" || !user) && (
+              <NavItem text="Upload" to="/upload" currentPath={location.pathname} />
+            )}
+
+            {/* Records: Guests and Patients can see it, but only Patients can access */}
+            {(user?.role === "patient" || !user) && (
+              <button
+                onClick={() => handleProtectedRoute("/records", ["patient"])}
+                className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition duration-150 ease-in-out border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              >
+                Records
+              </button>
+            )}
+
+            {/* Reports: Only Dermatologists */}
+            {user?.role === "dermatologist" && (
+              <NavItem text="Reports" to="/reports" currentPath={location.pathname} />
+            )}
+
+            {/* Chat: Guests and Logged-in users (Patients and Dermatologists) */}
+            <button
+              onClick={() => handleProtectedRoute("/chat", ["patient", "dermatologist"])}
+              className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition duration-150 ease-in-out border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            >
+              Chat
+            </button>
+
+            {/* Info: Accessible to all*/}
             <NavItem text="Info" to="/info" currentPath={location.pathname} />
           </div>
 
@@ -113,10 +149,24 @@ const Navbar = () => {
 
       {/* Logout Success Message */}
       {logoutMessage && (
-        <div className="mt-4 p-4 bg-green-100 text-green-800 rounded-md text-center max-w-5xl mx-auto">
+        <div
+          className="absolute top-15 left-1/2 transform -translate-x-1/2 p-4 bg-green-100 text-green-800 rounded-md text-center max-w-5xl shadow-md z-50"
+          style={{ width: "90%", maxWidth: "500px" }}
+        >
           {logoutMessage}
         </div>
       )}
+
+      {/* Warning Message */}
+      {warningMessage && (
+        <div
+          className="absolute top-15 left-1/2 transform -translate-x-1/2 p-4 bg-yellow-100 text-yellow-800 rounded-md text-center max-w-5xl shadow-md z-50"
+          style={{ width: "90%", maxWidth: "500px" }}
+        >
+          {warningMessage}
+        </div>
+      )}
+
 
     </nav>
   );

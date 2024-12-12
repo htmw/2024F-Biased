@@ -102,6 +102,20 @@ const UploadPage = () => {
       // Upload file
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
+
+      let newCaseId = "SKIN-1";
+      const casesRef = collection(db, "cases");
+      const casesSnapshot = await getDocs(casesRef);
+
+      if (!casesSnapshot.empty) {
+        const caseIds = casesSnapshot.docs
+          .map((doc) => doc.data().caseId)
+          .filter((id) => id.startsWith("SKIN-"))
+          .map((id) => parseInt(id.split("-")[1], 10))
+          .filter((num) => !isNaN(num));
+        const maxId = Math.max(0, ...caseIds);
+        newCaseId = `SKIN-${maxId + 1}`;
+      }
   
       // Add document to Firestore for logged-in users using `setDoc()` with `newCaseId` as the document ID
       if (user) {
