@@ -7,12 +7,10 @@ const RecordsList = ({ cases }) => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = 5; // Number of records to display per page
+  const recordsPerPage = 5;
 
-  // Calculate total pages
   const totalPages = Math.ceil(cases.length / recordsPerPage);
 
-  // Get records for the current page
   const currentRecords = cases.slice(
     (currentPage - 1) * recordsPerPage,
     currentPage * recordsPerPage
@@ -98,7 +96,7 @@ const RecordsList = ({ cases }) => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
                       onClick={() => handleViewReport(caseItem.caseId)}
-                      className="text-gray-800 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-md transition-colors"
+                      className="text-white hover:text-gray-900 bg-gray-800 hover:bg-gray-200 px-3 py-2 rounded-md transition-colors"
                     >
                       View Report
                     </button>

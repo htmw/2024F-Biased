@@ -10,6 +10,8 @@ import Navbar from "./components/layout/Navbar";
 import HomePage from "./pages/HomePage";
 import UploadPage from "./pages/UploadPage";
 import backgroundImage from "./bg.png";
+import ChatPage from "./pages/ChatPage";
+import ChatListPage from "./pages/ChatListPage";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import ViewReport from "./components/report/viewReport";
@@ -122,6 +124,8 @@ const App = () => {
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/report/:caseId" element={<ViewReport />} />
+            <Route path="/chat-list" element={<ChatListPage />} />
+            <Route path="/chat/:otherUserId" element={<ChatPage />} />
             <Route
               path="/dashboard"
               element={
