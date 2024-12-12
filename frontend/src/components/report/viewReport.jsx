@@ -184,14 +184,6 @@ const ViewReport = ({ caseId, onClose }) => {
                     {reportData.dermDiagnosis}
                   </p>
                 </div>
-                {/*<div className="mb-3">
-                  <h3 className="text-sm font-medium text-gray-700">
-                    Treatment Recommendations:
-                  </h3>
-                  <p className="text-gray-800 mt-1">
-                    {reportData.dermRecommendations}
-                  </p>
-          </div>*/}
                 <div className="text-xs text-gray-500 mt-2">
                   Reviewed on:{" "}
                   {new Date(reportData.dermReviewedAt).toLocaleString()}
@@ -226,12 +218,6 @@ const ViewReport = ({ caseId, onClose }) => {
           >
             Print Report
           </button>
-          {/* <button
-            onClick={downloadReport}
-            className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700 transition-colors"
-          >
-            Download PDF
-          </button> */}
         </div>
       </div>
     </div>

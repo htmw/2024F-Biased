@@ -279,7 +279,7 @@ const UploadPage = () => {
               {imageUrl && (
                 <button
                   onClick={handlePredict}
-                  className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-500 transition-all shadow-lg"
+                  className="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-500 transition-all shadow-lg"
                 >
                   Predict Diagnosis
                 </button>
