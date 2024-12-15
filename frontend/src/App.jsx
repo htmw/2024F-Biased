@@ -17,6 +17,7 @@ import Login from "./pages/Login";
 import ViewReport from "./components/report/viewReport";
 import DermDashboardPage from "./pages/DermDashboardpage";
 import PatientRecordsPage from "./pages/PatientRecordsPage";
+import InfoPage from "./pages/InfoPage";
 import { auth, db } from "./firebase-config";
 import { doc, getDoc } from "firebase/firestore";
 
@@ -121,6 +122,7 @@ const App = () => {
               }
             />
             <Route path="/upload" element={<UploadPage />} />
+            <Route path="/info" element={<InfoPage />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/report/:caseId" element={<ViewReport />} />
