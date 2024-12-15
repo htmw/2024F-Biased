@@ -22,6 +22,7 @@ const UploadPage = () => {
   const [hideTitle, setHideTitle] = useState(false);
   const [caseId, setCaseId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [hideButtons, setHideButtons] = useState(false);
 
   // Set user information on mount
   useEffect(() => {
@@ -194,8 +195,10 @@ const UploadPage = () => {
       }
   
       setHideUploadSection(true);
+      setHideButtons(true);
       setPreview(null);
       setHideTitle(true);
+      
   
       // For non-authenticated users, delete the temporary image after use
       if (!user) {
@@ -214,6 +217,21 @@ const UploadPage = () => {
       console.error("Error fetching prediction:", error);
     }
   };
+  const handleRetake = () => {
+    setFile(null);
+    setPreview(null);
+    setUploadMessage("");
+    setErrorMessage("");
+    setImageUrl("");
+    setPrediction("");
+    setDescription("");
+    setTreatment("");
+    setShowInstructions(true);
+    setHideUploadSection(false);
+    setHideButtons(false);
+    setHideTitle(false);
+  };
+  
   
   return (
     <div className="max-w-6xl mx-auto px-4 py-16">
@@ -247,27 +265,33 @@ const UploadPage = () => {
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
       >
-        {!hideUploadSection && (
-          <div className="w-full lg:w-1/2">
-            <div className="border-2 border-dashed rounded-xl p-12 text-center shadow-md hover:shadow-lg transition-shadow bg-gray-50/20">
-              {preview && !hideUploadSection ? (
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="mx-auto h-60 w-60 object-cover rounded-lg shadow-lg border-4 border-gray-200"
-                />
-              ) : (
-                <Upload className="mx-auto h-16 w-16 text-gray-400" />
-              )}
-              <input type="file" id="file-upload" className="hidden" onChange={handleFileChange} />
-              <label
-                htmlFor="file-upload"
-                className="mt-6 inline-block bg-gray-800 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-gray-700 transition-all shadow-lg"
-              >
-                Select Image
-              </label>
-            </div>
+      {!hideUploadSection && !prediction && (
+        <div className="w-full lg:w-1/2">
+          <div className="border-2 border-dashed rounded-xl p-12 text-center shadow-md hover:shadow-lg transition-shadow bg-gray-50/20">
+            {preview && !hideUploadSection ? (
+              <img
+                src={preview}
+                alt="Preview"
+                className="mx-auto h-60 w-60 object-cover rounded-lg shadow-lg border-4 border-gray-200"
+              />
+            ) : (
+              <Upload className="mx-auto h-16 w-16 text-gray-400" />
+            )}
+            <input
+              type="file"
+              id="file-upload"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <label
+              htmlFor="file-upload"
+              className="mt-6 inline-block bg-gray-800 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-gray-700 transition-all shadow-lg"
+            >
+              Select Image
+            </label>
+          </div>
 
+          {!hideButtons && !prediction && (
             <div className="flex justify-center items-center mt-6 space-x-4">
               <button
                 onClick={handleSubmit}
@@ -285,8 +309,10 @@ const UploadPage = () => {
                 </button>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
+
          {showInstructions && (
           <div className="w-full lg:w-1/2">
             <div className="bg-gray-50 rounded-xl p-8 shadow-sm">
@@ -307,7 +333,7 @@ const UploadPage = () => {
 
       {prediction && (
         <div className="mt-6 max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
-          {/* Prediction Card */}
+          {/* Prediction Card! */}
           <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200 flex-1">
             <div className="bg-gray-100 p-4">
               <h3 className="text-lg font-medium text-gray-800 text-center">Prediction Result</h3>
@@ -321,9 +347,17 @@ const UploadPage = () => {
                 />
               </div>
               <p className="text-center text-xl font-semibold text-blue-700">{prediction}</p>
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={handleRetake}
+                  className="bg-gray-800 text-white px-8 py-3 rounded-lg shadow-md hover:bg-gray-700 transition-transform duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300"
+                >
+                  Retake Test
+                </button>
+              </div>
               </div>
           </div>
-
+          
           {/* Description and Treatment Recommendations */}
           {user && (
             <div className="bg-gray-50 p-6 rounded-lg shadow-md border border-gray-200 flex-1">
